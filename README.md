@@ -89,6 +89,64 @@ launch it.
 - This is additive: `docker compose` / `uvicorn app.main:app` keep working exactly as before, using
   their own separate data locations — the desktop build is just a different way to run the same app.
 
+### Building on Windows
+
+`scripts/build_desktop.sh` is a bash script; the easiest way to run it as-is on Windows is via
+**Git Bash** (installed alongside [Git for Windows](https://git-scm.com/downloads/win)). It detects
+Windows' `Scripts/` venv layout automatically.
+
+One-time setup:
+
+1. Install [Python 3.12+](https://www.python.org/downloads/windows/) — check "Add python.exe to
+   PATH" during install.
+2. Install [Node.js LTS](https://nodejs.org/).
+3. Install [Git for Windows](https://git-scm.com/downloads/win) (gives you Git Bash).
+
+Then, in **Git Bash**:
+
+```bash
+git clone https://github.com/CORD1ALCH1P/ModernTerminal.git
+cd ModernTerminal
+./scripts/build_desktop.sh
+```
+
+This produces `backend\dist\savr\savr.exe`. Run it by double-clicking, or from a terminal:
+
+```
+cd backend\dist\savr
+savr.exe
+```
+
+If you'd rather not install Git Bash, run the equivalent steps directly in PowerShell:
+
+```powershell
+cd frontend
+npm ci
+npm run build
+Remove-Item -Recurse -Force ..\backend\app\static -ErrorAction SilentlyContinue
+Copy-Item -Recurse dist\* ..\backend\app\static\
+
+cd ..\backend
+python -m venv .venv-desktop-build
+.venv-desktop-build\Scripts\Activate.ps1
+pip install -e ".[desktop]"
+pyinstaller savr_desktop.spec --noconfirm
+```
+
+Windows-specific notes:
+
+- pywebview renders via **WebView2** (the Chromium-based component Microsoft ships with Windows
+  10/11) through `pythonnet`, which `pip install` pulls in automatically for you — nothing to add
+  manually. On an older or stripped-down Windows install without WebView2, install the
+  [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) redistributable.
+- SmartScreen: since the `.exe` isn't code-signed, Windows will likely show "Windows protected your
+  PC" on first run. Click "More info" → "Run anyway".
+- Data lives at `%APPDATA%\Savr\` (`savr.db`, `master.key`, `savr.log`).
+- **Not yet built or tested by me** — the PyInstaller spec is written to be platform-aware (it only
+  references GTK/PyGObject on Linux, WebView2/pythonnet on Windows), and pywebview/PyInstaller both
+  officially support Windows, but this container can only build and verify the Linux binary. If the
+  build fails on a step, share the error output and I'll adjust the spec.
+
 ## AI copilot setup
 
 The copilot needs a local [Ollama](https://ollama.com) server reachable from the backend, with a
