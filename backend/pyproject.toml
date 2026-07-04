@@ -1,0 +1,49 @@
+[project]
+name = "savr-backend"
+version = "0.1.0"
+description = "Web-based SSH/Telnet session manager backend"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.139,<0.140",
+    "uvicorn[standard]>=0.50,<0.51",
+    "asyncssh>=2.24,<3.0",
+    "telnetlib3>=4.0,<5.0",
+    "sqlalchemy>=2.0,<2.1",
+    "aiosqlite>=0.22,<0.23",
+    "alembic>=1.18,<2.0",
+    "cryptography>=49.0,<50.0",
+    "pydantic-settings>=2.14,<3.0",
+    "httpx>=0.28,<0.29",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.1,<10.0",
+    "pytest-asyncio>=1.4,<2.0",
+]
+# Native desktop packaging (pywebview window + PyInstaller build) -- not needed
+# for the Docker/dev-server ways of running the app, so kept out of core deps.
+desktop = [
+    # >=6.0 required on Linux: 5.x's GTK backend calls GLib.idle_add() in a way
+    # that raises "TypeError: Must be number, not method" against current
+    # PyGObject (>=3.56) -- confirmed by testing both versions directly.
+    "pywebview>=6.2,<7.0",
+    "platformdirs>=4.4,<5.0",
+    "pyinstaller>=6.16,<7.0",
+    # pywebview's Linux backend renders via GTK3/WebKit2GTK, bound through
+    # PyGObject -- these compile against the system's GTK/GObject-introspection
+    # dev headers (see README's desktop-build section for the apt packages
+    # needed). Irrelevant on Windows (WebView2) / macOS (built-in WKWebView).
+    "pygobject>=3.50,<4.0; sys_platform == 'linux'",
+    "pycairo>=1.26,<2.0; sys_platform == 'linux'",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

@@ -1,0 +1,26 @@
+services:
+  savr:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      # Bound to loopback only: there is no login/auth in this MVP, so the app
+      # must never be exposed on a non-local interface.
+      - "127.0.0.1:8000:8000"
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:////data/savr.db
+      - MASTER_KEY_FILE=/data/master.key
+      # AI copilot (Part 2): assumes `ollama serve` is running on the host
+      # machine, not in this container. host.docker.internal resolves to the
+      # host's IP; extra_hosts below is what makes that name resolve on Linux
+      # (Docker Desktop on Mac/Windows already provides it for free). Override
+      # this if Ollama runs elsewhere (another container, a remote server).
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - OLLAMA_MODEL=qwen3:8b
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - savr_data:/data
+
+volumes:
+  savr_data:

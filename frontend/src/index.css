@@ -1,0 +1,63 @@
+/*
+ * Theme tokens. Light values are the defaults; the dark block overrides
+ * surface/text/border tokens for a warm, Claude-like dark palette. Accent
+ * (green, standing in for Claude's coral) and the status-banner colors are
+ * deliberately theme-invariant: they're always used as a solid fill behind
+ * white text, so they're tuned once for that contrast rather than per-theme.
+ */
+:root {
+  color-scheme: light dark;
+
+  --bg: #ffffff;
+  --bg-secondary: #fafafa;
+  --bg-tertiary: #eef1f5;
+  --bg-elevated: #ffffff;
+  --text: #1a1a1a;
+  --text-muted: #656565;
+  --border: #dddddd;
+  --border-strong: #cccccc;
+  --overlay: rgba(0, 0, 0, 0.35);
+  --shadow: rgba(0, 0, 0, 0.2);
+  --inline-code-bg: rgba(0, 0, 0, 0.06);
+
+  --danger-bg: #fdecea;
+  --danger-text: #7a1f1f;
+  --warning-bg: #fff8e1;
+  --warning-text: #7a6a00;
+
+  /* Solid-fill + white-text tokens: intentionally the same in both themes. */
+  --accent: #2f8558;
+  --accent-hover: #256b46;
+  --accent-text: #ffffff;
+  --protocol-telnet-bg: #8a6d2a;
+  --status-connecting-bg: #7a6a00;
+  --status-error-bg: #7a1f1f;
+  --status-closed-bg: #444444;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #262420;
+    --bg-secondary: #2e2b25;
+    --bg-tertiary: #3a362e;
+    --bg-elevated: #322f28;
+    --text: #ece7dc;
+    --text-muted: #a39a8a;
+    --border: #46403c;
+    --border-strong: #5c5544;
+    --overlay: rgba(0, 0, 0, 0.6);
+    --shadow: rgba(0, 0, 0, 0.5);
+    --inline-code-bg: rgba(255, 255, 255, 0.08);
+
+    --danger-bg: #4a2420;
+    --danger-text: #ff9b8f;
+    --warning-bg: #453b1c;
+    --warning-text: #f0c975;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
