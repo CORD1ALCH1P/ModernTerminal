@@ -91,47 +91,37 @@ launch it.
 
 ### Building on Windows
 
-`scripts/build_desktop.sh` is a bash script; the easiest way to run it as-is on Windows is via
-**Git Bash** (installed alongside [Git for Windows](https://git-scm.com/downloads/win)). It detects
-Windows' `Scripts/` venv layout automatically.
+Use **`scripts\build_desktop.ps1`** -- a native PowerShell script, no Git Bash/WSL/sh required.
 
 One-time setup:
 
 1. Install [Python 3.12+](https://www.python.org/downloads/windows/) — check "Add python.exe to
    PATH" during install.
 2. Install [Node.js LTS](https://nodejs.org/).
-3. Install [Git for Windows](https://git-scm.com/downloads/win) (gives you Git Bash).
+3. Install [Git for Windows](https://git-scm.com/downloads/win) (just for `git clone`; Git Bash
+   itself isn't needed for the build).
 
-Then, in **Git Bash**:
+Then, in **PowerShell**:
 
-```bash
+```powershell
 git clone https://github.com/CORD1ALCH1P/ModernTerminal.git
 cd ModernTerminal
-./scripts/build_desktop.sh
+powershell -ExecutionPolicy Bypass -File scripts\build_desktop.ps1
 ```
+
+(The `-ExecutionPolicy Bypass` is just for this one invocation, scoped to this process — it doesn't
+change your system's script-execution policy. If you'd rather allow local scripts permanently instead:
+`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, then just run `.\scripts\build_desktop.ps1`.)
 
 This produces `backend\dist\savr\savr.exe`. Run it by double-clicking, or from a terminal:
 
-```
-cd backend\dist\savr
-savr.exe
-```
-
-If you'd rather not install Git Bash, run the equivalent steps directly in PowerShell:
-
 ```powershell
-cd frontend
-npm ci
-npm run build
-Remove-Item -Recurse -Force ..\backend\app\static -ErrorAction SilentlyContinue
-Copy-Item -Recurse dist\* ..\backend\app\static\
-
-cd ..\backend
-python -m venv .venv-desktop-build
-.venv-desktop-build\Scripts\Activate.ps1
-pip install -e ".[desktop]"
-pyinstaller savr_desktop.spec --noconfirm
+cd backend\dist\savr
+.\savr.exe
 ```
+
+`scripts\build_desktop.sh` (the bash version) still exists and does the same thing, for anyone who
+prefers Git Bash/WSL/macOS/Linux — pick whichever one matches how you're running the commands.
 
 Windows-specific notes:
 
@@ -142,10 +132,7 @@ Windows-specific notes:
 - SmartScreen: since the `.exe` isn't code-signed, Windows will likely show "Windows protected your
   PC" on first run. Click "More info" → "Run anyway".
 - Data lives at `%APPDATA%\Savr\` (`savr.db`, `master.key`, `savr.log`).
-- **Not yet built or tested by me** — the PyInstaller spec is written to be platform-aware (it only
-  references GTK/PyGObject on Linux, WebView2/pythonnet on Windows), and pywebview/PyInstaller both
-  officially support Windows, but this container can only build and verify the Linux binary. If the
-  build fails on a step, share the error output and I'll adjust the spec.
+- **Confirmed working**: built and run successfully on Windows.
 
 ## AI copilot setup
 
