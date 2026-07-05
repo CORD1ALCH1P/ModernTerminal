@@ -173,6 +173,7 @@ def host_to_out(host: Host) -> HostOut:
         auth_method=host.auth_method,
         has_secret=host.secret_blob is not None,
         ssh_host_key_fingerprint=host.ssh_host_key_fingerprint,
+        legacy_crypto=host.legacy_crypto,
         notes=host.notes,
         sort_order=host.sort_order,
         created_at=host.created_at,
@@ -204,6 +205,7 @@ async def create_host(db: AsyncSession, payload: HostCreate) -> Host:
         username=payload.username,
         auth_method=payload.auth_method,
         secret_blob=_pack_secret(payload.secret, payload.passphrase),
+        legacy_crypto=payload.legacy_crypto,
         notes=payload.notes,
         sort_order=order,
     )

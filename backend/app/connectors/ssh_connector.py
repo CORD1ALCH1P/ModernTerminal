@@ -5,6 +5,9 @@ import base64
 import hashlib
 
 import asyncssh
+import asyncssh.encryption
+import asyncssh.kex
+import asyncssh.mac
 
 from app.connectors.base import (
     AuthenticationFailed,
@@ -16,6 +19,16 @@ from app.connectors.base import (
 )
 
 READ_CHUNK = 65536
+
+# Algorithms modern asyncssh excludes from its default-enabled lists because
+# they're weak by today's standards, but that old devices -- e.g. Cisco IOS
+# 12, which predates CTR/GCM ciphers and SHA-2 key exchange entirely -- may
+# only ever speak. Appended after the secure defaults (never replacing them)
+# so a capable peer still negotiates a modern algorithm; these only kick in
+# when nothing stronger matches.
+LEGACY_KEX_ALGS = ["diffie-hellman-group-exchange-sha1", "diffie-hellman-group1-sha1"]
+LEGACY_ENCRYPTION_ALGS = ["aes256-cbc", "aes192-cbc", "aes128-cbc", "3des-cbc"]
+LEGACY_MAC_ALGS = ["hmac-md5"]
 
 
 def fingerprint_of(key: asyncssh.SSHKey) -> str:
@@ -65,6 +78,7 @@ class SSHConnector(TerminalConnector):
         pinned_fingerprint: str | None,
         cols: int,
         rows: int,
+        legacy_crypto: bool = False,
     ) -> None:
         super().__init__(on_output, on_closed)
         self._hostname = hostname
@@ -76,6 +90,7 @@ class SSHConnector(TerminalConnector):
         self._pinned_fingerprint = pinned_fingerprint
         self._cols = cols
         self._rows = rows
+        self._legacy_crypto = legacy_crypto
 
         self._conn: asyncssh.SSHClientConnection | None = None
         self._process: asyncssh.SSHClientProcess | None = None
@@ -118,12 +133,40 @@ class SSHConnector(TerminalConnector):
             connect_kwargs["client_keys"] = [key]
             connect_kwargs["password"] = None
 
+        if self._legacy_crypto:
+            # Appended after (not instead of) the secure defaults, so a
+            # capable peer still negotiates a modern algorithm -- these are
+            # only reached as a fallback for devices too old to offer anything
+            # else (e.g. Cisco IOS 12: diffie-hellman-group1-sha1 key
+            # exchange, CBC-only ciphers, no SHA-2 MACs).
+            default_kex = [a.decode() for a in asyncssh.kex.get_default_kex_algs()]
+            default_enc = [a.decode() for a in asyncssh.encryption.get_default_encryption_algs()]
+            default_mac = [a.decode() for a in asyncssh.mac.get_default_mac_algs()]
+            connect_kwargs["kex_algs"] = default_kex + LEGACY_KEX_ALGS
+            connect_kwargs["encryption_algs"] = default_enc + LEGACY_ENCRYPTION_ALGS
+            connect_kwargs["mac_algs"] = default_mac + LEGACY_MAC_ALGS
+
         try:
             self._conn = await asyncssh.connect(**connect_kwargs)
         except asyncssh.HostKeyNotVerifiable as exc:
             raise HostKeyMismatch(holder["fingerprint"]) from exc
         except asyncssh.PermissionDenied as exc:
             raise AuthenticationFailed(str(exc)) from exc
+        except asyncssh.KeyExchangeFailed as exc:
+            # asyncssh's own message dumps the full raw client/server algorithm
+            # lists -- meaningless to an end user and not actionable, so it's
+            # dropped in favor of a plain explanation of what this means and
+            # what to do about it (mirrors the ModelNotFound-style cleanup
+            # elsewhere in this codebase: never surface a raw negotiation
+            # dump when a clear, actionable message is possible instead).
+            message = "No matching key exchange, cipher, or MAC algorithm with the remote host."
+            if not self._legacy_crypto:
+                message += (
+                    " This is common with old devices (e.g. Cisco IOS 12) that only "
+                    "support outdated algorithms -- try enabling 'Legacy crypto "
+                    "compatibility' for this host."
+                )
+            raise ConnectionFailed(message) from exc
         except (OSError, asyncssh.Error) as exc:
             raise ConnectionFailed(str(exc)) from exc
 

@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import CheckConstraint, ForeignKey, Integer, LargeBinary, String
+from sqlalchemy import Boolean, CheckConstraint, ForeignKey, Integer, LargeBinary, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -44,6 +44,11 @@ class Host(Base):
     auth_method: Mapped[str] = mapped_column(String(16), default="none")
     secret_blob: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     ssh_host_key_fingerprint: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Opt-in only: widens SSHConnector's negotiated kex/cipher/MAC algorithms
+    # to include ones modern asyncssh excludes by default for being weak
+    # (diffie-hellman-group1-sha1, CBC-mode ciphers, hmac-md5) -- needed to
+    # reach old devices (e.g. Cisco IOS 12) that never speak anything newer.
+    legacy_crypto: Mapped[bool] = mapped_column(Boolean, default=False)
     notes: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(default=_utcnow)

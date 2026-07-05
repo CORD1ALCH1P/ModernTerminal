@@ -50,6 +50,7 @@ class HostCreate(BaseModel):
     auth_method: AuthMethod = "none"
     secret: str | None = None
     passphrase: str | None = None
+    legacy_crypto: bool = False
     notes: str | None = Field(default=None, max_length=2000)
 
     @model_validator(mode="after")
@@ -71,6 +72,7 @@ class HostUpdate(BaseModel):
     auth_method: AuthMethod | None = None
     secret: str | None = None
     passphrase: str | None = None
+    legacy_crypto: bool | None = None
     notes: str | None = Field(default=None, max_length=2000)
     # folder_id intentionally omitted -- use POST /api/hosts/{id}/move
 
@@ -95,6 +97,7 @@ class HostOut(BaseModel):
     auth_method: AuthMethod
     has_secret: bool
     ssh_host_key_fingerprint: str | None
+    legacy_crypto: bool
     notes: str | None
     sort_order: int
     created_at: datetime

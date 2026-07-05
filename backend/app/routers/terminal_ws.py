@@ -41,6 +41,7 @@ def _build_connector(
             pinned_fingerprint=host.ssh_host_key_fingerprint,
             cols=cols,
             rows=rows,
+            legacy_crypto=host.legacy_crypto,
         )
     if host.protocol == "telnet":
         return TelnetConnector(

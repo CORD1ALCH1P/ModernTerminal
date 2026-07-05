@@ -20,6 +20,7 @@ export function HostFormDialog({ host, onSubmit, onCancel }: HostFormDialogProps
   )
   const [secret, setSecret] = useState('')
   const [passphrase, setPassphrase] = useState('')
+  const [legacyCrypto, setLegacyCrypto] = useState(host?.legacy_crypto ?? false)
   const [notes, setNotes] = useState(host?.notes ?? '')
   const [submitting, setSubmitting] = useState(false)
 
@@ -37,6 +38,7 @@ export function HostFormDialog({ host, onSubmit, onCancel }: HostFormDialogProps
         username: username.trim() || null,
         auth_method: authMethod,
         notes: notes.trim() || null,
+        ...(effectiveProtocol === 'ssh' ? { legacy_crypto: legacyCrypto } : {}),
         ...(secret ? { secret, passphrase: passphrase || undefined } : {}),
       }
       if (isEdit) {
@@ -124,6 +126,22 @@ export function HostFormDialog({ host, onSubmit, onCancel }: HostFormDialogProps
           <label>
             Passphrase (optional)
             <input type="password" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} />
+          </label>
+        )}
+
+        {effectiveProtocol === 'ssh' && (
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={legacyCrypto}
+              onChange={(e) => setLegacyCrypto(e.target.checked)}
+            />
+            Legacy crypto compatibility
+            <span className="hint">
+              {' '}
+              — for old devices (e.g. Cisco IOS 12) that only support outdated key
+              exchange/ciphers
+            </span>
           </label>
         )}
 

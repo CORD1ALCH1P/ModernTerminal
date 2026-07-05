@@ -21,6 +21,7 @@ export interface Host {
   auth_method: AuthMethod
   has_secret: boolean
   ssh_host_key_fingerprint: string | null
+  legacy_crypto: boolean
   notes: string | null
   sort_order: number
   created_at: string
@@ -51,6 +52,7 @@ export interface HostCreateInput {
   auth_method?: AuthMethod
   secret?: string
   passphrase?: string
+  legacy_crypto?: boolean
   notes?: string | null
 }
 
@@ -62,6 +64,7 @@ export interface HostUpdateInput {
   auth_method?: AuthMethod
   secret?: string
   passphrase?: string
+  legacy_crypto?: boolean
   notes?: string | null
 }
 

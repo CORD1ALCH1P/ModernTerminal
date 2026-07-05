@@ -51,8 +51,26 @@ class SSHTestServer:
         await self._acceptor.wait_closed()
 
 
-async def start_ssh_test_server(password: str = "test-pass", port: int = 0) -> SSHTestServer:
+async def start_ssh_test_server(
+    password: str = "test-pass",
+    port: int = 0,
+    *,
+    kex_algs: list[str] | None = None,
+    encryption_algs: list[str] | None = None,
+    mac_algs: list[str] | None = None,
+) -> SSHTestServer:
     host_key = asyncssh.generate_private_key("ssh-ed25519")
+    extra: dict[str, object] = {}
+    # Only used to simulate an old device (e.g. Cisco IOS 12) that speaks
+    # nothing but legacy algorithms, for test_ssh_connector_legacy_crypto.py --
+    # every other caller leaves these unset and gets asyncssh's own modern
+    # defaults on both ends.
+    if kex_algs is not None:
+        extra["kex_algs"] = kex_algs
+    if encryption_algs is not None:
+        extra["encryption_algs"] = encryption_algs
+    if mac_algs is not None:
+        extra["mac_algs"] = mac_algs
     acceptor = await asyncssh.listen(
         "127.0.0.1",
         port,
@@ -65,5 +83,6 @@ async def start_ssh_test_server(password: str = "test-pass", port: int = 0) -> S
         # never deliver our raw, non-newline-terminated test payloads.
         encoding=None,
         line_editor=False,
+        **extra,
     )
     return SSHTestServer(acceptor.get_port(), password, acceptor)

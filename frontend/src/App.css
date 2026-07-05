@@ -238,6 +238,18 @@ body {
   font-weight: 500;
 }
 
+.dialog-box label.checkbox-label {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.dialog-box label.checkbox-label input[type='checkbox'] {
+  flex: none;
+  width: auto;
+  margin: 0.15rem 0 0;
+}
+
 .dialog-box input,
 .dialog-box select,
 .dialog-box textarea {
