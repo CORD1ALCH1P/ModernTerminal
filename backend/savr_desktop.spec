@@ -20,9 +20,16 @@ block_cipher = None
 
 datas = [
     ("app/static", "app/static"),
+    ("app/assets", "app/assets"),
     ("alembic", "alembic"),
     ("alembic.ini", "."),
 ]
+
+# EXE()'s icon= sets the .exe file/taskbar icon on Windows (needs .ico).
+# Linux has no EXE-level icon concept -- its window/taskbar icon instead
+# comes from webview.start(icon=...) in desktop_app.py at runtime, using the
+# app/assets/icon.png bundled above.
+exe_icon = "app/assets/icon.ico" if sys.platform == "win32" else None
 
 if sys.platform.startswith("linux"):
     platform_hiddenimports = [
@@ -79,6 +86,7 @@ exe = EXE(
     strip=False,
     upx=False,
     console=False,
+    icon=exe_icon,
 )
 
 coll = COLLECT(

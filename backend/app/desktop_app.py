@@ -108,8 +108,14 @@ def main() -> None:
 
     import webview
 
+    # PNG works for the GTK (Linux) and Cocoa (macOS) backends; Windows'
+    # winforms backend needs an .ico specifically (System.Drawing.Icon can't
+    # load a bare PNG), so pick per-platform from the two bundled files.
+    icon_name = "icon.ico" if sys.platform == "win32" else "icon.png"
+    icon_path = Path(__file__).resolve().parent / "assets" / icon_name
+
     webview.create_window("Savr", f"http://127.0.0.1:{port}", width=1400, height=900)
-    webview.start()
+    webview.start(icon=str(icon_path) if icon_path.is_file() else None)
 
     server.should_exit = True
     thread.join(timeout=5)
