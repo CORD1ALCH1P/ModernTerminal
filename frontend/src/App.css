@@ -459,6 +459,7 @@ body.resizing-col {
   border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background: var(--bg-secondary);
   color: var(--text);
   font-size: 0.85rem;
@@ -469,6 +470,8 @@ body.resizing-col {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--border);
   box-shadow: 0 1px 0 rgba(52, 211, 153, 0.15);
@@ -476,9 +479,16 @@ body.resizing-col {
   letter-spacing: 0.02em;
 }
 
+.agent-header span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .agent-header select {
   font: inherit;
   font-weight: 400;
+  min-width: 0;
   padding: 0.2rem 0.4rem;
   background: var(--bg);
   color: var(--text);
@@ -488,6 +498,8 @@ body.resizing-col {
 
 .agent-header-actions {
   display: flex;
+  min-width: 0;
+  flex-shrink: 1;
   align-items: center;
   gap: 0.4rem;
 }

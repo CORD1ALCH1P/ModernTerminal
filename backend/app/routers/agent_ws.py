@@ -6,7 +6,7 @@ import json
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 
 from app.ai import session_registry
-from app.ai.base import AIProvider, ChatMessage
+from app.ai.base import AIProvider, ChatMessage, ModelNotFound
 from app.ai.loop import run_agent_turn
 from app.ai.ollama_provider import OllamaProvider
 from app.ai.provider_factory import get_provider
@@ -41,6 +41,19 @@ async def _check_capability(provider: AIProvider, notify: Notify) -> None:
                     ),
                 }
             )
+    except ModelNotFound:
+        # Surface this proactively as soon as the panel connects, rather than
+        # letting the user discover it via a confusing error on their first
+        # chat attempt.
+        await notify(
+            {
+                "type": "capability_warning",
+                "message": (
+                    f"Model {provider.model!r} isn't pulled on this Ollama server yet -- run "
+                    f"`ollama pull {provider.model}` or pick a different model in Settings."
+                ),
+            }
+        )
     except Exception:
         pass
 

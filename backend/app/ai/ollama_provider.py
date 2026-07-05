@@ -9,6 +9,7 @@ from app.ai.base import (
     AIProvider,
     ChatMessage,
     Done,
+    ModelNotFound,
     ProviderUnavailable,
     StreamEvent,
     TextDelta,
@@ -23,6 +24,17 @@ def _to_ollama_message(message: ChatMessage) -> dict:
     if message.tool_name is not None:
         payload["tool_name"] = message.tool_name
     return payload
+
+
+def _error_detail(body: bytes) -> str | None:
+    """Ollama's error responses are typically {"error": "..."} JSON (e.g.
+    "model \"qwen3:8b\" not found, try pulling it first") -- surface that
+    directly instead of the generic httpx wrapper text when available."""
+    try:
+        detail = json.loads(body).get("error")
+    except (ValueError, AttributeError):
+        return None
+    return detail if isinstance(detail, str) else None
 
 
 def _to_ollama_tool(tool: ToolSpec) -> dict:
@@ -85,7 +97,11 @@ class OllamaProvider(AIProvider):
             async with self._client.stream(
                 "POST", f"{self._base_url}/api/chat", json=payload, timeout=self._timeout
             ) as response:
-                response.raise_for_status()
+                if response.status_code >= 400:
+                    detail = _error_detail(await response.aread())
+                    if response.status_code == 404 and detail:
+                        raise ModelNotFound(detail)
+                    raise ProviderUnavailable(detail or f"HTTP {response.status_code} from Ollama")
                 tool_calls_seen = False
                 async for line in response.aiter_lines():
                     if not line.strip():
@@ -109,7 +125,7 @@ class OllamaProvider(AIProvider):
                     if chunk.get("done"):
                         yield Done(chunk.get("done_reason") or "stop")
                         return
-        except (httpx.ConnectError, httpx.TimeoutException, httpx.HTTPStatusError) as exc:
+        except (httpx.ConnectError, httpx.TimeoutException) as exc:
             raise ProviderUnavailable(str(exc)) from exc
 
     async def list_models(self) -> list[str]:
@@ -122,11 +138,16 @@ class OllamaProvider(AIProvider):
 
     async def supports_tools(self, model: str) -> bool | None:
         """Best-effort capability check via /api/show. Returns None (rather
-        than guessing) if the endpoint or response shape isn't as expected."""
+        than guessing) if the endpoint or response shape isn't as expected.
+        Raises ModelNotFound specifically when the model doesn't exist on the
+        server, so callers can surface that distinctly from an ambiguous
+        failure (e.g. a proactive "pull the model" hint)."""
         try:
             response = await self._client.post(
                 f"{self._base_url}/api/show", json={"model": model}, timeout=self._timeout
             )
+            if response.status_code == 404:
+                raise ModelNotFound(_error_detail(response.content) or f"model {model!r} not found")
             response.raise_for_status()
         except (httpx.ConnectError, httpx.TimeoutException, httpx.HTTPStatusError):
             return None

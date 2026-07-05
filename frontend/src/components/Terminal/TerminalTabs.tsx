@@ -4,7 +4,12 @@ import { AgentPanel } from '../Agent/AgentPanel'
 import { TerminalPane } from './TerminalPane'
 
 const DEFAULT_AGENT_PANEL_WIDTH = 360
-const MIN_AGENT_PANEL_WIDTH = 260
+// Below this, the header (label + mode <select> + Settings button) no
+// longer fits and used to overflow into the browser's own scrollbars --
+// see the CSS min-width/overflow guards on .agent-header too, which handle
+// it defensively in case something still doesn't fit at this width (a very
+// large font/zoom level, a translated label, etc.).
+const MIN_AGENT_PANEL_WIDTH = 320
 const MAX_AGENT_PANEL_WIDTH = 800
 
 export function TerminalTabs() {

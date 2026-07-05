@@ -1,6 +1,15 @@
 from __future__ import annotations
 
-from app.ai.base import AIProvider, ChatMessage, Done, ProviderUnavailable, TextDelta, ToolCall, ToolCallRequested
+from app.ai.base import (
+    AIProvider,
+    ChatMessage,
+    Done,
+    ModelNotFound,
+    ProviderUnavailable,
+    TextDelta,
+    ToolCall,
+    ToolCallRequested,
+)
 from app.ai.session_registry import AgentSession
 from app.ai.tools import (
     READ_SCROLLBACK_TOOL,
@@ -11,7 +20,7 @@ from app.ai.tools import (
 )
 from app.config import get_settings
 
-MAX_TOOL_ITERATIONS = 8
+MAX_TOOL_ITERATIONS = 25
 
 SYSTEM_MESSAGE = ChatMessage(
     role="system",
@@ -22,7 +31,15 @@ SYSTEM_MESSAGE = ChatMessage(
         "provided tools. Infer the device's vendor/OS (Cisco IOS, JunOS, Arista EOS, Linux, "
         "etc.) from context -- prompts, banners, command output -- rather than assuming one. "
         "Some commands you send may pause for the human's approval before they run; that's "
-        "expected, not a failure. Be careful, and briefly explain your reasoning before acting."
+        "expected, not a failure. Be careful, and briefly explain your reasoning before acting.\n\n"
+        "Work the problem to completion yourself rather than stopping partway to ask the human "
+        "whether to continue. If a command errors or gives an unexpected result, read the output, "
+        "diagnose it, and try the next reasonable step on your own -- keep iterating through "
+        "setbacks until the original task is done or you've genuinely run out of reasonable things "
+        "to try, and only then summarize what happened and ask for direction. Don't pause mid-task "
+        "just to confirm a plan you're already confident in; the confirm-before-apply/dangerous-"
+        "command safety gate (when enabled) already stops you before anything risky actually runs, "
+        "so you don't need to additionally ask permission in the chat itself."
     ),
 )
 
@@ -65,8 +82,10 @@ async def run_agent_turn(
                     "fatal": False,
                 }
             )
+    except ModelNotFound as exc:
+        await notify({"type": "error", "message": f"Model not available: {exc}", "fatal": False})
     except ProviderUnavailable as exc:
-        await notify({"type": "error", "message": f"AI backend unreachable: {exc}", "fatal": False})
+        await notify({"type": "error", "message": f"AI request failed: {exc}", "fatal": False})
     finally:
         await notify({"type": "assistant_done"})
 

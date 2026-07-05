@@ -58,6 +58,14 @@ class ProviderUnavailable(ProviderError):
     the caller should surface this as a non-fatal error rather than crashing."""
 
 
+class ModelNotFound(ProviderUnavailable):
+    """The configured model isn't available on the provider (e.g. not pulled
+    yet in Ollama). A subclass of ProviderUnavailable so existing callers
+    that only handle that still work; callers that want to react
+    specifically (e.g. surface a "pull the model" hint proactively instead
+    of a generic connectivity error) can catch this distinctly."""
+
+
 class AIProvider(abc.ABC):
     """One turn of a tool-calling conversation with an LLM backend.
 
