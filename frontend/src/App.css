@@ -45,7 +45,9 @@ body {
 .session-tree-header {
   padding: 0.6rem 0.75rem;
   font-weight: 600;
+  letter-spacing: 0.02em;
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(52, 211, 153, 0.15);
 }
 
 .session-tree-body {
@@ -75,11 +77,14 @@ body {
   padding: 0.3rem 0.75rem;
   cursor: pointer;
   white-space: nowrap;
+  border-left: 2px solid transparent;
+  transition: background 0.15s var(--ease-premium), border-color 0.15s var(--ease-premium);
 }
 
 .folder-row:hover,
 .host-row:hover {
   background: var(--bg-tertiary);
+  border-left-color: var(--accent-glow);
 }
 
 .chevron {
@@ -103,21 +108,24 @@ body {
 
 .host-address {
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
 }
 
 .protocol-badge {
   font-size: 0.65rem;
+  font-family: var(--font-mono);
   text-transform: uppercase;
+  letter-spacing: 0.04em;
   padding: 0.05rem 0.35rem;
-  border-radius: 3px;
+  border-radius: 2px;
   color: var(--accent-text);
   background: var(--text-muted);
   flex: none;
 }
 
 .protocol-badge--ssh {
-  background: var(--accent);
+  background: var(--accent-gradient);
 }
 
 .protocol-badge--telnet {
@@ -133,8 +141,8 @@ body {
   background: var(--bg-elevated);
   color: var(--text);
   border: 1px solid var(--border-strong);
-  border-radius: 4px;
-  box-shadow: 0 2px 8px var(--shadow);
+  border-radius: var(--radius);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 4px var(--shadow), 0 12px 28px var(--shadow);
   min-width: 140px;
 }
 
@@ -142,6 +150,7 @@ body {
   padding: 0.4rem 0.9rem;
   cursor: pointer;
   font-size: 0.85rem;
+  transition: background 0.12s var(--ease-premium);
 }
 
 .tree-context-menu li:hover {
@@ -158,6 +167,8 @@ body {
   position: fixed;
   inset: 0;
   background: var(--overlay);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -167,13 +178,14 @@ body {
 .dialog-box {
   background: var(--bg-elevated);
   color: var(--text);
-  border-radius: 6px;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) * 2);
   padding: 1.25rem 1.5rem;
   width: 360px;
   max-width: calc(100vw - 2rem);
   max-height: calc(100vh - 2rem);
   overflow-y: auto;
-  box-shadow: 0 4px 20px var(--shadow);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 6px var(--shadow), 0 20px 48px var(--shadow);
 }
 
 .dialog-box h2 {
@@ -201,9 +213,18 @@ body {
   font: inherit;
   padding: 0.4rem 0.5rem;
   border: 1px solid var(--border-strong);
-  border-radius: 4px;
+  border-radius: var(--radius);
   background: var(--bg);
   color: var(--text);
+  transition: border-color 0.18s var(--ease-premium), box-shadow 0.18s var(--ease-premium);
+}
+
+.dialog-box input:focus,
+.dialog-box select:focus,
+.dialog-box textarea:focus {
+  outline: none;
+  border-color: var(--accent-glow);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.18);
 }
 
 .dialog-box .hint {
@@ -223,21 +244,22 @@ body {
   font: inherit;
   padding: 0.4rem 0.9rem;
   border: 1px solid var(--border-strong);
-  border-radius: 4px;
+  border-radius: var(--radius);
   background: var(--bg-tertiary);
   color: var(--text);
   cursor: pointer;
+  transition: box-shadow 0.18s var(--ease-premium), border-color 0.18s var(--ease-premium), background 0.18s var(--ease-premium);
 }
 
 .dialog-actions button[type='submit'] {
-  background: var(--accent);
+  background: var(--accent-gradient);
   border-color: var(--accent);
   color: var(--accent-text);
 }
 
 .dialog-actions button[type='submit']:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  border-color: var(--accent-glow);
+  box-shadow: 0 0 14px -3px var(--accent-glow);
 }
 
 .ai-settings-fetch-row {
@@ -276,14 +298,23 @@ body {
   padding: 0.4rem 0.5rem 0.4rem 0.9rem;
   cursor: pointer;
   border-right: 1px solid var(--border);
+  border-bottom: 2px solid transparent;
   color: var(--text);
-  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
   white-space: nowrap;
+  transition: border-color 0.18s var(--ease-premium);
+}
+
+.tab:hover {
+  border-bottom-color: var(--border-strong);
 }
 
 .tab--active {
-  background: var(--accent);
+  background: var(--accent-gradient);
   color: var(--accent-text);
+  border-bottom-color: var(--accent-glow);
+  box-shadow: inset 0 -2px 6px -2px var(--accent-glow);
 }
 
 .tab-close {
@@ -318,6 +349,41 @@ body {
   min-width: 0;
 }
 
+.agent-resize-handle {
+  flex: none;
+  width: 5px;
+  margin: 0 -2px;
+  cursor: col-resize;
+  background: transparent;
+  position: relative;
+  z-index: 1;
+}
+
+.agent-resize-handle::after {
+  content: '';
+  position: absolute;
+  inset: 0 2px;
+  background: var(--border);
+  transition: background 0.18s var(--ease-premium);
+}
+
+.agent-resize-handle:hover::after {
+  background: var(--accent-glow);
+}
+
+/* Set on <body> while dragging so the cursor/no-select applies even when the
+   pointer briefly leaves the thin handle during a fast drag. */
+body.resizing-col {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.agent-panel-wrapper {
+  flex: none;
+  display: flex;
+  min-width: 0;
+}
+
 .terminal-pane {
   display: flex;
   flex-direction: column;
@@ -333,8 +399,9 @@ body {
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.25rem 0.75rem;
-  font-family: system-ui, sans-serif;
-  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
   color: #fff;
   background: #333;
 }
@@ -346,10 +413,11 @@ body {
 }
 
 .terminal-status-actions button {
-  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
   padding: 0.15rem 0.5rem;
   border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 3px;
+  border-radius: 2px;
   background: transparent;
   color: #fff;
   cursor: pointer;
@@ -364,7 +432,8 @@ body {
 }
 
 .terminal-status--connected {
-  background: var(--accent);
+  background: var(--accent-gradient);
+  box-shadow: inset 0 -2px 8px -2px var(--accent-glow);
 }
 
 .terminal-status--error {
@@ -384,8 +453,9 @@ body {
 /* --- AI plugin panel --- */
 
 .agent-panel {
-  flex: none;
-  width: 360px;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
   border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -401,7 +471,9 @@ body {
   justify-content: space-between;
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(52, 211, 153, 0.15);
   font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .agent-header select {
@@ -411,7 +483,7 @@ body {
   background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border-strong);
-  border-radius: 4px;
+  border-radius: var(--radius);
 }
 
 .agent-header-actions {
@@ -426,15 +498,16 @@ body {
   font-size: 0.8rem;
   padding: 0.3rem 0.7rem;
   border: 1px solid var(--accent);
-  border-radius: 4px;
-  background: var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-gradient);
   color: var(--accent-text);
   cursor: pointer;
+  transition: box-shadow 0.18s var(--ease-premium), border-color 0.18s var(--ease-premium);
 }
 
 .agent-header-actions button:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  border-color: var(--accent-glow);
+  box-shadow: 0 0 12px -3px var(--accent-glow);
 }
 
 .agent-error {
@@ -462,8 +535,9 @@ body {
 }
 
 .agent-message {
-  padding: 0.4rem 0.6rem;
-  border-radius: 6px;
+  position: relative;
+  padding: 0.4rem 1.75rem 0.4rem 0.6rem;
+  border-radius: var(--radius);
   max-width: 90%;
   white-space: pre-wrap;
   word-break: break-word;
@@ -471,7 +545,7 @@ body {
 
 .agent-message--user {
   align-self: flex-end;
-  background: var(--accent);
+  background: var(--accent-gradient);
   color: var(--accent-text);
 }
 
@@ -481,11 +555,75 @@ body {
   color: var(--text);
 }
 
+.agent-message-copy {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.18s var(--ease-premium), color 0.18s var(--ease-premium);
+}
+
+.agent-message:hover .agent-message-copy {
+  opacity: 0.6;
+}
+
+.agent-message-copy:hover {
+  opacity: 1;
+  color: var(--accent-glow);
+}
+
+.agent-message--thinking {
+  padding: 0.6rem 0.75rem;
+}
+
+.thinking-dots {
+  display: inline-flex;
+  gap: 0.3rem;
+}
+
+.thinking-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: thinking-pulse 1.2s ease-in-out infinite;
+}
+
+.thinking-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.thinking-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes thinking-pulse {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.85);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .agent-tool-activity {
   align-self: flex-start;
-  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
   color: var(--text-muted);
-  font-style: italic;
 }
 
 .agent-pending-confirmation {
@@ -495,14 +633,15 @@ body {
   border: 1px solid var(--warning-text);
   background: var(--warning-bg);
   color: var(--text);
-  border-radius: 6px;
+  border-radius: var(--radius);
   font-size: 0.8rem;
 }
 
 .agent-pending-confirmation code {
+  font-family: var(--font-mono);
   background: var(--inline-code-bg);
   padding: 0.05rem 0.3rem;
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
 .agent-pending-confirmation .hint {
@@ -524,27 +663,64 @@ body {
   font: inherit;
   padding: 0.35rem 0.5rem;
   border: 1px solid var(--border-strong);
-  border-radius: 4px;
+  border-radius: var(--radius);
   background: var(--bg);
   color: var(--text);
+  transition: border-color 0.18s var(--ease-premium), box-shadow 0.18s var(--ease-premium);
+}
+
+.agent-input-row input:focus {
+  outline: none;
+  border-color: var(--accent-glow);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.18);
 }
 
 .agent-input-row button {
   font: inherit;
   padding: 0.35rem 0.9rem;
   border: 1px solid var(--accent);
-  border-radius: 4px;
-  background: var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-gradient);
   color: var(--accent-text);
   cursor: pointer;
+  transition: box-shadow 0.18s var(--ease-premium), border-color 0.18s var(--ease-premium);
 }
 
 .agent-input-row button:hover:not(:disabled) {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  border-color: var(--accent-glow);
+  box-shadow: 0 0 12px -3px var(--accent-glow);
 }
 
 .agent-input-row button:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+/* --- Thin, theme-matched scrollbars (WebKit/Blink -- covers every runtime
+   this app actually ships on: Chrome/Edge dev, and the desktop build's
+   WebView2/WebKitGTK/WKWebView) instead of the chunky OS default. --- */
+
+.session-tree-body::-webkit-scrollbar,
+.agent-messages::-webkit-scrollbar,
+.dialog-box::-webkit-scrollbar {
+  width: 8px;
+}
+
+.session-tree-body::-webkit-scrollbar-track,
+.agent-messages::-webkit-scrollbar-track,
+.dialog-box::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.session-tree-body::-webkit-scrollbar-thumb,
+.agent-messages::-webkit-scrollbar-thumb,
+.dialog-box::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+
+.session-tree-body::-webkit-scrollbar-thumb:hover,
+.agent-messages::-webkit-scrollbar-thumb:hover,
+.dialog-box::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-glow);
 }

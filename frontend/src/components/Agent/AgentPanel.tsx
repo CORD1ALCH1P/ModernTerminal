@@ -1,6 +1,23 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { AISettingsDialog } from './AISettingsDialog'
 
+function CopyIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  )
+}
+
+function CheckIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  )
+}
+
 type Mode = 'confirm' | 'auto'
 
 interface ChatEntry {
@@ -28,7 +45,9 @@ export function AgentPanel({ sessionId }: AgentPanelProps) {
   const [capabilityWarning, setCapabilityWarning] = useState<string | null>(null)
   const [inputText, setInputText] = useState('')
   const [busy, setBusy] = useState(false)
+  const [thinking, setThinking] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
 
   useEffect(() => {
     // Guards against a stale connection's callbacks firing after this effect
@@ -60,9 +79,11 @@ export function AgentPanel({ sessionId }: AgentPanelProps) {
           )
           break
         case 'assistant_delta':
+          setThinking(false)
           setStreaming((text) => text + msg.text)
           break
         case 'tool_call':
+          setThinking(false)
           setEntries((e) => [
             ...e,
             { kind: 'activity', text: `Running ${msg.name}(${JSON.stringify(msg.arguments)})` },
@@ -72,9 +93,11 @@ export function AgentPanel({ sessionId }: AgentPanelProps) {
           setEntries((e) => [...e, { kind: 'activity', text: `Result: ${msg.result}` }])
           break
         case 'pending_confirmation':
+          setThinking(false)
           setPending({ command: msg.command, reason: msg.reason })
           break
         case 'assistant_done':
+          setThinking(false)
           setStreaming((text) => {
             if (text) setEntries((e) => [...e, { kind: 'assistant', text }])
             return ''
@@ -88,6 +111,7 @@ export function AgentPanel({ sessionId }: AgentPanelProps) {
           setCapabilityWarning(msg.message)
           break
         case 'error':
+          setThinking(false)
           setConnectionError(msg.message)
           if (msg.fatal) setBusy(false)
           break
@@ -106,7 +130,7 @@ export function AgentPanel({ sessionId }: AgentPanelProps) {
 
   useEffect(() => {
     messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight })
-  }, [entries, streaming])
+  }, [entries, streaming, thinking])
 
   const sendUserMessage = (e: FormEvent) => {
     e.preventDefault()
@@ -114,6 +138,7 @@ export function AgentPanel({ sessionId }: AgentPanelProps) {
     if (!text || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return
     setEntries((entries) => [...entries, { kind: 'user', text }])
     setBusy(true)
+    setThinking(true)
     wsRef.current.send(JSON.stringify({ type: 'user_message', text }))
     setInputText('')
   }
@@ -121,6 +146,12 @@ export function AgentPanel({ sessionId }: AgentPanelProps) {
   const respondToConfirmation = (approve: boolean) => {
     wsRef.current?.send(JSON.stringify({ type: 'confirm_command', approve }))
     setPending(null)
+  }
+
+  const copyText = (text: string, index: number) => {
+    void navigator.clipboard.writeText(text)
+    setCopiedIndex(index)
+    window.setTimeout(() => setCopiedIndex((cur) => (cur === index ? null : cur)), 1200)
   }
 
   const changeMode = (newMode: Mode) => {
@@ -156,10 +187,28 @@ export function AgentPanel({ sessionId }: AgentPanelProps) {
           ) : (
             <div key={i} className={`agent-message agent-message--${entry.kind}`}>
               {entry.text}
+              <button
+                type="button"
+                className="agent-message-copy"
+                title="Copy"
+                aria-label="Copy message"
+                onClick={() => copyText(entry.text, i)}
+              >
+                {copiedIndex === i ? <CheckIcon /> : <CopyIcon />}
+              </button>
             </div>
           ),
         )}
         {streaming && <div className="agent-message agent-message--assistant">{streaming}</div>}
+        {thinking && (
+          <div className="agent-message agent-message--assistant agent-message--thinking">
+            <span className="thinking-dots">
+              <span />
+              <span />
+              <span />
+            </span>
+          </div>
+        )}
       </div>
 
       {pending && (

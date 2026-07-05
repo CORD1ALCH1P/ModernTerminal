@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import '@xterm/xterm/css/xterm.css'
 import { useSessionTree } from '../../state/SessionTreeContext'
+import { TreeContextMenu } from '../SessionTree/TreeContextMenu'
 import { ConnectionStatusBanner, type ConnectionState } from './ConnectionStatusBanner'
 import { createOutputHighlighter } from './outputHighlighter'
 
@@ -18,7 +19,6 @@ const AUTO_CLOSE_DELAY_MS = 1500
 
 interface TerminalPaneProps {
   hostId: number
-  isActive: boolean
   sessionId: string
   aiPanelOpen: boolean
   onToggleAgentPanel: () => void
@@ -27,7 +27,6 @@ interface TerminalPaneProps {
 
 export function TerminalPane({
   hostId,
-  isActive,
   sessionId,
   aiPanelOpen,
   onToggleAgentPanel,
@@ -36,10 +35,12 @@ export function TerminalPane({
   const { acceptHostKey } = useSessionTree()
   const containerRef = useRef<HTMLDivElement>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
+  const termRef = useRef<Terminal | null>(null)
   const [state, setState] = useState<ConnectionState>('connecting')
   const [message, setMessage] = useState<string | null>(null)
   const [mismatchFingerprint, setMismatchFingerprint] = useState<string | null>(null)
   const [reconnectKey, setReconnectKey] = useState(0)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
 
   // Latest-ref indirection so the connection effect below doesn't need
   // onSessionEnded in its dependency array -- TerminalTabs passes a new
@@ -70,8 +71,16 @@ export function TerminalPane({
     const term = new Terminal({ cursorBlink: true, convertEol: true })
     const fitAddon = new FitAddon()
     fitAddonRef.current = fitAddon
+    termRef.current = term
     term.loadAddon(fitAddon)
     term.open(container)
+
+    // PuTTY/MobaXterm-style copy-on-select, since xterm renders to a canvas
+    // and the OS's own "select text -> copy" affordance doesn't apply to it.
+    const selectionDisposable = term.onSelectionChange(() => {
+      const selection = term.getSelection()
+      if (selection) void navigator.clipboard.writeText(selection)
+    })
 
     // The default renderer is canvas-based and always works; WebGL is a
     // pure perf upgrade on top of it, so a failure here must not break
@@ -163,32 +172,48 @@ export function TerminalPane({
       }
     })
 
-    const handleWindowResize = () => fitAddon.fit()
-    window.addEventListener('resize', handleWindowResize)
+    // A single ResizeObserver on the container covers every reason its size
+    // might change -- window resize, the agent panel opening/closing or being
+    // dragged (see .agent-resize-handle in TerminalTabs), and a background
+    // tab becoming visible again (xterm can't measure a display:none
+    // container, so it needs a re-fit the moment it's shown). Simpler and
+    // more robust than wiring each of those cases through separately.
+    const resizeObserver = new ResizeObserver(() => {
+      fitAddonRef.current?.fit()
+    })
+    resizeObserver.observe(container)
 
     return () => {
       cancelled = true
       if (autoCloseTimeout !== null) clearTimeout(autoCloseTimeout)
-      window.removeEventListener('resize', handleWindowResize)
+      resizeObserver.disconnect()
+      selectionDisposable.dispose()
       dataDisposable.dispose()
       resizeDisposable.dispose()
       ws.close()
       term.dispose()
       fitAddonRef.current = null
+      termRef.current = null
     }
   }, [hostId, sessionId, reconnectKey])
 
-  // Background tabs stay mounted (and connected) so switching tabs doesn't
-  // kill the session; re-fit on becoming visible since xterm can't measure
-  // its container accurately while it's display:none. Also re-fit when the
-  // AI panel opens/closes: that resizes this pane's flex sibling without a
-  // window "resize" event, so xterm's canvas would otherwise stay sized for
-  // the old (wider) width and visually overlap the agent panel.
-  useEffect(() => {
-    if (isActive) fitAddonRef.current?.fit()
-  }, [isActive, aiPanelOpen])
-
   const reconnect = () => setReconnectKey((k) => k + 1)
+
+  const handleContextMenu = (e: MouseEvent) => {
+    e.preventDefault()
+    setContextMenu({ x: e.clientX, y: e.clientY })
+  }
+
+  const copySelection = () => {
+    const selection = termRef.current?.getSelection()
+    if (selection) void navigator.clipboard.writeText(selection)
+  }
+
+  const pasteClipboard = () => {
+    void navigator.clipboard.readText().then((text) => {
+      if (text) termRef.current?.paste(text)
+    })
+  }
 
   const actions = (
     <>
@@ -217,7 +242,18 @@ export function TerminalPane({
   return (
     <div className="terminal-pane">
       <ConnectionStatusBanner state={state} message={message} actions={actions} />
-      <div ref={containerRef} className="terminal-container" />
+      <div ref={containerRef} className="terminal-container" onContextMenu={handleContextMenu} />
+      {contextMenu && (
+        <TreeContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          items={[
+            { label: 'Copy', onClick: copySelection },
+            { label: 'Paste', onClick: pasteClipboard },
+          ]}
+        />
+      )}
     </div>
   )
 }

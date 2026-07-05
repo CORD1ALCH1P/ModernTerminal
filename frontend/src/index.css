@@ -1,58 +1,65 @@
 /*
  * Theme tokens. Light values are the defaults; the dark block overrides
- * surface/text/border tokens for a warm, Claude-like dark palette. Accent
- * (green, standing in for Claude's coral) and the status-banner colors are
- * deliberately theme-invariant: they're always used as a solid fill behind
- * white text, so they're tuned once for that contrast rather than per-theme.
+ * surface/text/border tokens for a low-key cyberpunk palette (deep
+ * near-black surfaces, jade-green accent). Accent and the status-banner
+ * colors are deliberately theme-invariant: they're always used as a solid
+ * fill behind white text, so they're tuned once for that contrast rather
+ * than per-theme. --accent-glow is decorative only (box-shadow/border
+ * glints on dark surfaces) -- never used behind text, so it isn't
+ * contrast-constrained.
  */
 :root {
   color-scheme: light dark;
 
   --bg: #ffffff;
-  --bg-secondary: #fafafa;
-  --bg-tertiary: #eef1f5;
+  --bg-secondary: #f6faf7;
+  --bg-tertiary: #e9f5ee;
   --bg-elevated: #ffffff;
-  --text: #1a1a1a;
-  --text-muted: #656565;
-  --border: #dddddd;
-  --border-strong: #cccccc;
-  --overlay: rgba(0, 0, 0, 0.35);
-  --shadow: rgba(0, 0, 0, 0.2);
-  --inline-code-bg: rgba(0, 0, 0, 0.06);
+  --text: #10190f;
+  --text-muted: #5a6e61;
+  --border: #d9e6dd;
+  --border-strong: #c1d2c7;
+  --overlay: rgba(6, 14, 10, 0.4);
+  --shadow: rgba(10, 22, 16, 0.16);
+  --inline-code-bg: rgba(4, 120, 87, 0.08);
 
-  --danger-bg: #fdecea;
-  --danger-text: #7a1f1f;
-  --warning-bg: #fff8e1;
-  --warning-text: #7a6a00;
+  --danger-bg: #fdecef;
+  --danger-text: #9f1239;
+  --warning-bg: #fef6e0;
+  --warning-text: #8a5a00;
+
+  --radius: 4px;
 
   /* Solid-fill + white-text tokens: intentionally the same in both themes. */
-  --accent: #2f8558;
-  --accent-hover: #256b46;
+  --accent: #047857;
+  --accent-hover: #065f46;
   --accent-text: #ffffff;
-  --protocol-telnet-bg: #8a6d2a;
-  --status-connecting-bg: #7a6a00;
-  --status-error-bg: #7a1f1f;
-  --status-closed-bg: #444444;
+  --accent-glow: #34d399;
+  --accent-gradient: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  --protocol-telnet-bg: #b45309;
+  --status-connecting-bg: #8a5a00;
+  --status-error-bg: #9f1239;
+  --status-closed-bg: #3a4a40;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #262420;
-    --bg-secondary: #2e2b25;
-    --bg-tertiary: #3a362e;
-    --bg-elevated: #322f28;
-    --text: #ece7dc;
-    --text-muted: #a39a8a;
-    --border: #46403c;
-    --border-strong: #5c5544;
-    --overlay: rgba(0, 0, 0, 0.6);
-    --shadow: rgba(0, 0, 0, 0.5);
-    --inline-code-bg: rgba(255, 255, 255, 0.08);
+    --bg: #0a0d0a;
+    --bg-secondary: #0e120e;
+    --bg-tertiary: #141b15;
+    --bg-elevated: #10140f;
+    --text: #e3f2e8;
+    --text-muted: #6d8a76;
+    --border: #1c2820;
+    --border-strong: #26382c;
+    --overlay: rgba(0, 4, 2, 0.75);
+    --shadow: rgba(0, 0, 0, 0.6);
+    --inline-code-bg: rgba(52, 211, 153, 0.1);
 
-    --danger-bg: #4a2420;
-    --danger-text: #ff9b8f;
-    --warning-bg: #453b1c;
-    --warning-text: #f0c975;
+    --danger-bg: #38101d;
+    --danger-text: #ff6b8b;
+    --warning-bg: #362a05;
+    --warning-text: #ffd166;
   }
 }
 
@@ -60,4 +67,9 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
+}
+
+:root {
+  --font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, 'Roboto Mono', monospace;
+  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
 }
