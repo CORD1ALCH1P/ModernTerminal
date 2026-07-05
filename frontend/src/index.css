@@ -1,65 +1,67 @@
 /*
- * Theme tokens. Light values are the defaults; the dark block overrides
- * surface/text/border tokens for a low-key cyberpunk palette (deep
- * near-black surfaces, jade-green accent). Accent and the status-banner
- * colors are deliberately theme-invariant: they're always used as a solid
- * fill behind white text, so they're tuned once for that contrast rather
- * than per-theme. --accent-glow is decorative only (box-shadow/border
- * glints on dark surfaces) -- never used behind text, so it isn't
- * contrast-constrained.
+ * Theme tokens: retro-futurist, restricted to the logo's four hues (red/
+ * yellow/green/blue) plus a warm cream/near-black neutral pair -- no cyan,
+ * no purple, no gradients. Light mode is a cream "paper" surface (not pure
+ * white); dark mode is near-black (matching the logo's background), both
+ * matching the ModernTerminal mark exactly. --accent/--status-*-bg are
+ * deliberately theme-invariant and tuned darker than the raw logo hue where
+ * they sit behind solid white text (green, red, yellow all fail contrast at
+ * full logo brightness); --accent-glow stays at full logo brightness since
+ * it's decorative only (borders/glow on dark surfaces), never behind text.
  */
 :root {
   color-scheme: light dark;
 
-  --bg: #ffffff;
-  --bg-secondary: #f6faf7;
-  --bg-tertiary: #e9f5ee;
-  --bg-elevated: #ffffff;
-  --text: #10190f;
-  --text-muted: #5a6e61;
-  --border: #d9e6dd;
-  --border-strong: #c1d2c7;
-  --overlay: rgba(6, 14, 10, 0.4);
-  --shadow: rgba(10, 22, 16, 0.16);
-  --inline-code-bg: rgba(4, 120, 87, 0.08);
+  --bg: #f7efd9;
+  --bg-secondary: #f0e6c8;
+  --bg-tertiary: #e9dcb8;
+  --bg-elevated: #fdf9ee;
+  --text: #1b1712;
+  --text-muted: #6e6353;
+  --border: #ddcfa4;
+  --border-strong: #c7b686;
+  --overlay: rgba(20, 16, 8, 0.45);
+  --shadow: rgba(20, 16, 8, 0.2);
+  --inline-code-bg: rgba(47, 109, 30, 0.08);
 
-  --danger-bg: #fdecef;
-  --danger-text: #9f1239;
-  --warning-bg: #fef6e0;
-  --warning-text: #8a5a00;
+  --danger-bg: #fbe6e2;
+  --danger-text: #a8241a;
+  --warning-bg: #fbf0c8;
+  --warning-text: #7a5e0d;
 
-  --radius: 4px;
+  --radius: 6px;
 
   /* Solid-fill + white-text tokens: intentionally the same in both themes. */
-  --accent: #047857;
-  --accent-hover: #065f46;
+  --accent: #2f6d1e;
+  --accent-hover: #255714;
   --accent-text: #ffffff;
-  --accent-glow: #34d399;
-  --accent-gradient: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  --protocol-telnet-bg: #b45309;
-  --status-connecting-bg: #8a5a00;
-  --status-error-bg: #9f1239;
-  --status-closed-bg: #3a4a40;
+  --accent-glow: #7fd151;
+  /* Flat fill, not a gradient -- retro-futurist minimalism over "premium" gloss. */
+  --accent-gradient: var(--accent);
+  --protocol-telnet-bg: #0b69cc;
+  --status-connecting-bg: #7a5e10;
+  --status-error-bg: #d2261c;
+  --status-closed-bg: #3a352c;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0a0d0a;
-    --bg-secondary: #0e120e;
-    --bg-tertiary: #141b15;
-    --bg-elevated: #10140f;
-    --text: #e3f2e8;
-    --text-muted: #6d8a76;
-    --border: #1c2820;
-    --border-strong: #26382c;
-    --overlay: rgba(0, 4, 2, 0.75);
-    --shadow: rgba(0, 0, 0, 0.6);
-    --inline-code-bg: rgba(52, 211, 153, 0.1);
+    --bg: #0a0a0a;
+    --bg-secondary: #131110;
+    --bg-tertiary: #1c1917;
+    --bg-elevated: #161311;
+    --text: #f2e8d0;
+    --text-muted: #8c8172;
+    --border: #262220;
+    --border-strong: #38332e;
+    --overlay: rgba(0, 0, 0, 0.72);
+    --shadow: rgba(0, 0, 0, 0.55);
+    --inline-code-bg: rgba(127, 209, 81, 0.12);
 
-    --danger-bg: #38101d;
-    --danger-text: #ff6b8b;
-    --warning-bg: #362a05;
-    --warning-text: #ffd166;
+    --danger-bg: #3a1410;
+    --danger-text: #ff6b57;
+    --warning-bg: #332405;
+    --warning-text: #ffd23f;
   }
 }
 
