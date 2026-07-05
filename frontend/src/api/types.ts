@@ -70,13 +70,22 @@ export interface HostMoveInput {
   index: number
 }
 
+export type AIProviderKind = 'ollama' | 'custom_api'
+
 export interface AISettings {
-  provider: string
+  provider: AIProviderKind
   ollama_base_url: string
   ollama_model: string
+  custom_api_base_url: string
+  custom_api_model: string
+  has_custom_api_key: boolean
 }
 
 export interface AISettingsUpdateInput {
+  provider?: AIProviderKind
   ollama_base_url?: string
   ollama_model?: string
+  custom_api_base_url?: string
+  custom_api_model?: string
+  custom_api_key?: string
 }

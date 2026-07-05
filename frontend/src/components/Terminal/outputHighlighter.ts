@@ -4,31 +4,33 @@ interface Rule {
 }
 
 // Ordered by priority: earlier rules win when spans overlap.
+// Retro palette: only red/green/yellow/blue (no cyan/magenta), bold used to
+// distinguish categories that would otherwise share a base hue.
 const RULES: Rule[] = [
   // Cisco-style prompts: "Router#", "Router>", "Switch(config-if)#"
-  { regex: /^[A-Za-z0-9_.-]{1,32}(?:\([\w./-]{1,32}\))?[>#](?=\s|$)/, sgr: '1;35' },
+  { regex: /^[A-Za-z0-9_.-]{1,32}(?:\([\w./-]{1,32}\))?[>#](?=\s|$)/, sgr: '1;34' },
   // Linux-style prompts: "user@host:~$", "user@host:/etc#"
-  { regex: /^[\w.-]+@[\w.-]+:[^\s#$]*[#$](?=\s|$)/, sgr: '1;35' },
+  { regex: /^[\w.-]+@[\w.-]+:[^\s#$]*[#$](?=\s|$)/, sgr: '1;34' },
   // IPv4 addresses
   {
     regex: /\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/g,
-    sgr: '36',
+    sgr: '34',
   },
   // Cisco-style MAC (aabb.ccdd.eeff)
-  { regex: /\b[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}\b/g, sgr: '35' },
+  { regex: /\b[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}\b/g, sgr: '33' },
   // Standard MAC (aa:bb:cc:dd:ee:ff)
-  { regex: /\b(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}\b/g, sgr: '35' },
+  { regex: /\b(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}\b/g, sgr: '33' },
   // Cisco interface names
   {
     regex:
       /\b(?:GigabitEthernet|TenGigabitEthernet|FortyGigE|HundredGigE|FastEthernet|Ethernet|Loopback|Vlan|Serial|Port-channel|Tunnel|Async|Management|Null)\d+(?:\/\d+){0,3}(?:\.\d+)?\b/gi,
-    sgr: '34',
+    sgr: '1;33',
   },
   // Negative / down / error states
   {
     regex:
       /\b(?:down|disabled|deny|denied|fail(?:ed|ure)?|error|err-disabled|shutdown|inactive|dead|critical|unreachable|timeout|timed out|refused|not found)\b/gi,
-    sgr: '31',
+    sgr: '1;31',
   },
   // Positive / up / ok states
   {

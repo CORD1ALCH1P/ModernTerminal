@@ -37,6 +37,9 @@ async def test_update_settings_persists_for_subsequent_reads(client):
         "provider": "ollama",
         "ollama_base_url": "http://example.invalid:11434",
         "ollama_model": "llama3.1",
+        "custom_api_base_url": "",
+        "custom_api_model": "",
+        "has_custom_api_key": False,
     }
 
     resp = await client.get("/api/ai/settings")
@@ -64,7 +67,37 @@ async def test_partial_update_leaves_other_fields_unchanged(client):
         "provider": "ollama",
         "ollama_base_url": "http://example.invalid:11434",
         "ollama_model": "llama3.1",
+        "custom_api_base_url": "",
+        "custom_api_model": "",
+        "has_custom_api_key": False,
     }
+
+
+async def test_can_switch_provider_and_configure_custom_api(client):
+    resp = await client.put(
+        "/api/ai/settings",
+        json={
+            "provider": "custom_api",
+            "custom_api_base_url": "https://api.example.com/v1",
+            "custom_api_model": "gpt-4o-mini",
+            "custom_api_key": "sk-secret",
+        },
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["provider"] == "custom_api"
+    assert body["custom_api_base_url"] == "https://api.example.com/v1"
+    assert body["custom_api_model"] == "gpt-4o-mini"
+    # The key itself is never echoed back, only whether one is set.
+    assert body["has_custom_api_key"] is True
+    assert "custom_api_key" not in body
+
+    from app.ai.openai_compatible_provider import OpenAICompatibleProvider
+    from app.ai.provider_factory import get_provider
+
+    provider = get_provider()
+    assert isinstance(provider, OpenAICompatibleProvider)
+    assert provider.model == "gpt-4o-mini"
 
 
 async def test_list_models_against_real_fake_ollama_server(client):

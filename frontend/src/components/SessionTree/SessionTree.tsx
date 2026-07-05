@@ -1,5 +1,6 @@
 import { useMemo, useState, type MouseEvent } from 'react'
 import type { Folder, Host, HostCreateInput, HostUpdateInput } from '../../api/types'
+import { AISettingsDialog } from '../Agent/AISettingsDialog'
 import { FolderFormDialog } from '../HostDialog/FolderFormDialog'
 import { HostFormDialog } from '../HostDialog/HostFormDialog'
 import { useSessionTree } from '../../state/SessionTreeContext'
@@ -47,6 +48,7 @@ export function SessionTree() {
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [folderDialog, setFolderDialog] = useState<FolderDialogState | null>(null)
   const [hostDialog, setHostDialog] = useState<HostDialogState | null>(null)
+  const [aiSettingsOpen, setAiSettingsOpen] = useState(false)
 
   const { roots, rootHosts } = useMemo(() => buildTree(folders, hosts), [folders, hosts])
 
@@ -124,8 +126,15 @@ export function SessionTree() {
 
   return (
     <div className="session-tree" onContextMenu={openRootContextMenu} {...rootDrop}>
-      <div className="session-tree-header">Sessions</div>
+      <div className="session-tree-header">
+        <span>Sessions</span>
+        <button type="button" className="ai-settings-button" onClick={() => setAiSettingsOpen(true)}>
+          AI Settings
+        </button>
+      </div>
       {error && <div className="session-tree-error">{error}</div>}
+
+      {aiSettingsOpen && <AISettingsDialog onClose={() => setAiSettingsOpen(false)} />}
 
       <div className="session-tree-body">
         {roots.map((node) => (

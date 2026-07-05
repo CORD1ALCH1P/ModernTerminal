@@ -28,7 +28,10 @@ class ChatMessage:
     role: Role
     content: str
     tool_calls: list[ToolCall] | None = None  # only on assistant messages
-    tool_name: str | None = None  # only on role="tool" messages
+    tool_name: str | None = None  # only on role="tool" messages (Ollama's convention)
+    tool_call_id: str | None = None  # only on role="tool" messages (OpenAI-compatible
+    # convention -- correlates back to the ToolCall.id that requested it; each provider
+    # implementation reads whichever of these two fields its own wire format needs)
 
 
 @dataclass

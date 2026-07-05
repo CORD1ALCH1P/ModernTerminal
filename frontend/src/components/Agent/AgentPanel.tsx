@@ -39,6 +39,14 @@ export function AgentPanel({ sessionId }: AgentPanelProps) {
   const messagesRef = useRef<HTMLDivElement>(null)
   const [entries, setEntries] = useState<ChatEntry[]>([])
   const [streaming, setStreaming] = useState('')
+  // Mirrors `streaming`, read from the assistant_done handler below instead
+  // of the state variable itself: React StrictMode's dev-only double-invoke
+  // of state *updater* functions means an updater that also calls another
+  // setState as a side effect (as this used to, appending to `entries` from
+  // inside the setStreaming(text => ...) callback) runs that side effect
+  // twice, silently duplicating the finished message. A plain ref mutation
+  // isn't part of that purity-checking mechanism, so it isn't re-run.
+  const streamingRef = useRef('')
   const [mode, setMode] = useState<Mode>('confirm')
   const [pending, setPending] = useState<PendingConfirmation | null>(null)
   const [connectionError, setConnectionError] = useState<string | null>(null)
@@ -48,6 +56,7 @@ export function AgentPanel({ sessionId }: AgentPanelProps) {
   const [thinking, setThinking] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+  const [reconnectKey, setReconnectKey] = useState(0)
 
   useEffect(() => {
     // Guards against a stale connection's callbacks firing after this effect
@@ -57,6 +66,15 @@ export function AgentPanel({ sessionId }: AgentPanelProps) {
     // socket's belated onerror could still flip this component's state even
     // though the second, surviving socket is connected and healthy).
     let cancelled = false
+
+    // A fresh connection re-fetches the provider server-side (see
+    // agent_ws.py), which is what picks up settings saved via the dialog
+    // below -- reset any stale capability warning/error from the previous
+    // connection so this doesn't look like the save didn't do anything.
+    setCapabilityWarning(null)
+    setConnectionError(null)
+    streamingRef.current = ''
+    setStreaming('')
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const ws = new WebSocket(
@@ -80,7 +98,8 @@ export function AgentPanel({ sessionId }: AgentPanelProps) {
           break
         case 'assistant_delta':
           setThinking(false)
-          setStreaming((text) => text + msg.text)
+          streamingRef.current += msg.text
+          setStreaming(streamingRef.current)
           break
         case 'tool_call':
           setThinking(false)
@@ -96,14 +115,21 @@ export function AgentPanel({ sessionId }: AgentPanelProps) {
           setThinking(false)
           setPending({ command: msg.command, reason: msg.reason })
           break
-        case 'assistant_done':
+        case 'assistant_done': {
           setThinking(false)
-          setStreaming((text) => {
-            if (text) setEntries((e) => [...e, { kind: 'assistant', text }])
-            return ''
-          })
+          // Captured by value: setEntries' updater only runs later, when
+          // React gets around to processing it, by which point the
+          // streamingRef.current = '' reset below would already have
+          // happened if this read it live off the ref instead.
+          const finalText = streamingRef.current
+          if (finalText) {
+            setEntries((e) => [...e, { kind: 'assistant', text: finalText }])
+          }
+          streamingRef.current = ''
+          setStreaming('')
           setBusy(false)
           break
+        }
         case 'mode_changed':
           setMode(msg.mode)
           break
@@ -126,7 +152,7 @@ export function AgentPanel({ sessionId }: AgentPanelProps) {
       cancelled = true
       ws.close()
     }
-  }, [sessionId])
+  }, [sessionId, reconnectKey])
 
   useEffect(() => {
     messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight })
@@ -158,6 +184,13 @@ export function AgentPanel({ sessionId }: AgentPanelProps) {
     wsRef.current?.send(JSON.stringify({ type: 'set_mode', mode: newMode }))
   }
 
+  // Saving settings updates the backend's provider, but this panel's WS
+  // connection already fetched (and is holding onto) the *old* provider
+  // instance for its whole lifetime -- reconnecting is what picks up the
+  // change immediately instead of leaving a stale "model not found" banner
+  // up until the user manually closes and reopens the panel/session.
+  const reconnectAfterSettingsSaved = () => setReconnectKey((k) => k + 1)
+
   return (
     <div className="agent-panel">
       <div className="agent-header">
@@ -173,7 +206,12 @@ export function AgentPanel({ sessionId }: AgentPanelProps) {
         </div>
       </div>
 
-      {settingsOpen && <AISettingsDialog onClose={() => setSettingsOpen(false)} />}
+      {settingsOpen && (
+        <AISettingsDialog
+          onClose={() => setSettingsOpen(false)}
+          onSaved={reconnectAfterSettingsSaved}
+        />
+      )}
 
       {connectionError && <div className="agent-error">{connectionError}</div>}
       {capabilityWarning && <div className="agent-capability-warning">{capabilityWarning}</div>}

@@ -15,6 +15,9 @@ class AIRuntimeSettings:
     provider: str
     ollama_base_url: str
     ollama_model: str
+    custom_api_base_url: str
+    custom_api_key: str
+    custom_api_model: str
 
 
 _current: AIRuntimeSettings | None = None
@@ -28,6 +31,9 @@ def get_runtime_settings() -> AIRuntimeSettings:
             provider=settings.ai_provider,
             ollama_base_url=settings.ollama_base_url,
             ollama_model=settings.ollama_model,
+            custom_api_base_url=settings.custom_api_base_url,
+            custom_api_key=settings.custom_api_key,
+            custom_api_model=settings.custom_api_model,
         )
     return _current
 

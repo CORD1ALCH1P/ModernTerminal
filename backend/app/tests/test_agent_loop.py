@@ -200,3 +200,42 @@ async def test_history_records_full_conversation():
         await session.connector.close()
         session_registry.unregister(session_id)
         await server.close()
+
+
+async def test_truncated_reply_is_automatically_continued_and_merged():
+    """A response cut off by the per-call token cap (done_reason="length")
+    must not read as the agent simply trailing off mid-sentence -- the loop
+    should call the model again and stitch the continuation onto the same
+    logical reply rather than leaving two disjointed chat_history entries."""
+    server = await start_ssh_test_server(password="s3cr3t")
+    session_id = "test-truncated-continue"
+    try:
+        session = await _connected_session(server, session_id)
+        provider = FakeProvider(
+            [
+                [TextDelta("This is a very long explanation that gets cut"), Done("length")],
+                [TextDelta(" off and then continues seamlessly."), Done("stop")],
+            ]
+        )
+        recorder = Recorder()
+
+        await run_agent_turn(session, provider, "explain everything", recorder.notify)
+
+        # The model was called twice (once truncated, once to continue)...
+        assert len(provider.calls) == 2
+        # ...but the frontend only ever sees one assistant_done for the whole turn.
+        assert len(recorder.of_type("assistant_done")) == 1
+        deltas = "".join(m["text"] for m in recorder.of_type("assistant_delta"))
+        assert deltas == "This is a very long explanation that gets cut off and then continues seamlessly."
+
+        # And chat_history has ONE merged assistant message, not two.
+        roles = [m.role for m in session.chat_history]
+        assert roles == ["user", "assistant"]
+        assert (
+            session.chat_history[-1].content
+            == "This is a very long explanation that gets cut off and then continues seamlessly."
+        )
+    finally:
+        await session.connector.close()
+        session_registry.unregister(session_id)
+        await server.close()

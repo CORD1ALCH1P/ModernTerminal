@@ -53,9 +53,17 @@ async def run_agent_turn(
     _trim_history(session)
 
     try:
+        # Set once a call comes back truncated (hit ai_max_response_tokens)
+        # with nothing to act on -- the *next* iteration's text then extends
+        # the same chat_history entry instead of appending a new one, so one
+        # logical (if long) answer doesn't end up as several separate
+        # bubbles once the frontend replays history after a reconnect.
+        continuing_truncated_reply = False
+
         for _ in range(MAX_TOOL_ITERATIONS):
             text = ""
             calls: list[ToolCall] = []
+            done_reason = "stop"
             async for event in provider.stream_chat([SYSTEM_MESSAGE, *session.chat_history], _TOOLS):
                 if isinstance(event, TextDelta):
                     text += event.text
@@ -63,17 +71,33 @@ async def run_agent_turn(
                 elif isinstance(event, ToolCallRequested):
                     calls = event.calls
                 elif isinstance(event, Done):
-                    pass
+                    done_reason = event.reason
 
-            session.chat_history.append(ChatMessage(role="assistant", content=text, tool_calls=calls or None))
-            if not calls:
-                return
+            last = session.chat_history[-1] if session.chat_history else None
+            if continuing_truncated_reply and last is not None and last.role == "assistant" and not last.tool_calls:
+                last.content += text
+            else:
+                session.chat_history.append(ChatMessage(role="assistant", content=text, tool_calls=calls or None))
 
-            for call in calls:
-                await notify({"type": "tool_call", "name": call.name, "arguments": call.arguments})
-                result = await _dispatch(session, call, notify)
-                await notify({"type": "tool_result", "name": call.name, "result": result})
-                session.chat_history.append(ChatMessage(role="tool", content=result, tool_name=call.name))
+            if calls:
+                continuing_truncated_reply = False
+                for call in calls:
+                    await notify({"type": "tool_call", "name": call.name, "arguments": call.arguments})
+                    result = await _dispatch(session, call, notify)
+                    await notify({"type": "tool_result", "name": call.name, "result": result})
+                    session.chat_history.append(
+                        ChatMessage(role="tool", content=result, tool_name=call.name, tool_call_id=call.id)
+                    )
+                continue
+
+            if done_reason == "length":
+                # Cut off by the per-call token cap, not because the model was
+                # actually finished -- loop again so it continues rather than
+                # leaving a reply trailing off mid-sentence.
+                continuing_truncated_reply = True
+                continue
+
+            return
         else:
             await notify(
                 {
