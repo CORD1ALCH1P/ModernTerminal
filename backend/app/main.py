@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.routers import agent_ws, ai_settings, folders, hosts, terminal_ws
 
-app = FastAPI(title="Savr", version="0.1.0")
+app = FastAPI(title="ModernTerminal", version="0.1.0")
 
 
 @app.get("/api/health")

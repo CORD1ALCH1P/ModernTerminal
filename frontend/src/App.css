@@ -20,10 +20,30 @@ body {
 
 .app-sidebar {
   flex: none;
-  width: 280px;
-  border-right: 1px solid var(--border);
   overflow-y: auto;
   background: var(--bg-secondary);
+}
+
+.sidebar-resize-handle {
+  flex: none;
+  width: 5px;
+  margin: 0 -2px;
+  cursor: col-resize;
+  background: transparent;
+  position: relative;
+  z-index: 1;
+}
+
+.sidebar-resize-handle::after {
+  content: '';
+  position: absolute;
+  inset: 0 2px;
+  background: var(--border);
+  transition: background 0.18s var(--ease-premium);
+}
+
+.sidebar-resize-handle:hover::after {
+  background: var(--accent-glow);
 }
 
 .app-main {
@@ -55,7 +75,14 @@ body {
   box-shadow: 0 1px 0 rgba(127, 209, 81, 0.15);
 }
 
-.ai-settings-button {
+.session-tree-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ai-settings-button,
+.export-hosts-button {
   font: inherit;
   font-weight: 600;
   font-size: 0.75rem;
@@ -74,7 +101,13 @@ body {
     color 0.18s var(--ease-premium);
 }
 
-.ai-settings-button:hover {
+.export-hosts-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-settings-button:hover,
+.export-hosts-button:hover:not(:disabled) {
   background: var(--accent-gradient);
   color: var(--accent-text);
   text-shadow: none;

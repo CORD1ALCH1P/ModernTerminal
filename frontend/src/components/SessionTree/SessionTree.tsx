@@ -6,6 +6,7 @@ import { HostFormDialog } from '../HostDialog/HostFormDialog'
 import { useSessionTree } from '../../state/SessionTreeContext'
 import { useTabs } from '../../state/TabsContext'
 import { buildTree } from '../../state/buildTree'
+import { downloadHostsExport } from '../../state/exportHosts'
 import { FolderNode } from './FolderNode'
 import { HostNode } from './HostNode'
 import { TreeContextMenu, type MenuItem } from './TreeContextMenu'
@@ -128,9 +129,20 @@ export function SessionTree() {
     <div className="session-tree" onContextMenu={openRootContextMenu} {...rootDrop}>
       <div className="session-tree-header">
         <span>Sessions</span>
-        <button type="button" className="ai-settings-button" onClick={() => setAiSettingsOpen(true)}>
-          AI Settings
-        </button>
+        <div className="session-tree-header-actions">
+          <button
+            type="button"
+            className="export-hosts-button"
+            onClick={() => downloadHostsExport(folders, hosts)}
+            disabled={folders.length === 0 && hosts.length === 0}
+            title="Export all folders/hosts to a JSON file (no passwords/keys included)"
+          >
+            Export
+          </button>
+          <button type="button" className="ai-settings-button" onClick={() => setAiSettingsOpen(true)}>
+            AI Settings
+          </button>
+        </div>
       </div>
       {error && <div className="session-tree-error">{error}</div>}
 
