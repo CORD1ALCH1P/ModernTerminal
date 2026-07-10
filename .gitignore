@@ -30,3 +30,20 @@ backend/.env
 
 # Local Claude Code settings (per-developer, not shared)
 .claude/settings.local.json
+
+# LoRA fine-tuning workspace: scripts/schema are tracked, everything else
+# (model weights, checkpoints, venv, and raw captures that may contain real
+# device hostnames/IPs/secrets) is not.
+training/.venv/
+training/models/
+training/checkpoints/
+training/dataset/raw/
+training/dataset/*.jsonl
+!training/dataset/example.jsonl
+
+# Raw dataset drops outside training/ (same policy as above -- unverified
+# training text, not project source) and Unsloth's local kernel compile cache
+# (can appear at repo root or under training/scripts/ depending on cwd).
+/dataset_savrV2/
+unsloth_compiled_cache/
+training/**/__pycache__/
